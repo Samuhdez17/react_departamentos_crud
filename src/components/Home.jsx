@@ -2,35 +2,46 @@ import React, { Component } from 'react';
 
 import loading from '../assets/images/pantalla_carga.gif';
 import DepartamentosService from '../services/DepartamentosService';
-import { NavLink } from 'react-router-dom';
+import { Navigate, NavLink } from 'react-router-dom';
+import Departamento from './Departamento';
+import Global from '../Global';
 
 export default class Home extends Component {
     service = new DepartamentosService()
 
     state = {
         status: false,
-        recargar: true,
         departamentos: [],
     }
 
-    cargarDepartamentos = () => {
-        this.service.getDepartamentos().then(res => {
+    cargarDepartamentos = () => { 
+        if (this.props.noActualizar !== 'true')
+            this.service.getDepartamentos().then(res => {
+            console.log('accediendo api');
+        
+                Global.departamentos = res.data
+
+                this.setState({
+                    status: true,
+                    departamentos: res.data
+                })
+            })
+
+        else 
             this.setState({
                 status: true,
-                departamentos: res.data
+                departamentos: Global.departamentos
             })
-        })
-    }
-
-    metodoPadre = (recargar) => {
-        this.setState({
-            recargar: recargar,
-        })
     }
 
     componentDidMount() {
-        this.state.recargar &&
         this.cargarDepartamentos();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.noActualizar !== prevProps.noActualizar) {
+            <Navigate to='/' />
+        }
     }
 
     render() {
@@ -54,20 +65,7 @@ export default class Home extends Component {
                         <tbody>
                             {this.state.departamentos.map((dep, index) => {
                                 return (
-                                    <tr key={index}>
-                                        <td>{dep.nombre}</td>
-                                        <td>{dep.localidad}</td>
-                                        <td>
-                                            <NavLink className='btn btn-info'
-                                            to = {
-                                                'update_depa/'+dep.numero+'/'+dep.nombre+'/'+dep.localidad
-                                            }> Editar </NavLink>
-                                        </td>
-                                        <td>
-                                            <NavLink to= {`/eliminar_depa/${dep.numero}/${this.metodoPadre}`} className='btn btn-danger'
-                                            > Eliminar </NavLink>
-                                        </td>
-                                    </tr>
+                                    <Departamento key={index} dep={dep}/>
                                 )
                             })}
                         </tbody>
